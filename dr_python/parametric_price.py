@@ -370,6 +370,7 @@ for ag in range(n_ag):
             )
         )
         + 2 * reg * np.eye(dims_y[ag]) @ y[ag]
+        # + 2 * reg * np.diag(np.concatenate((np.zeros(tsteps), np.ones(2 * tsteps), np.zeros(tsteps)))) @ y[ag]
     )
     pgrad.append(pg)
 
@@ -399,6 +400,8 @@ for ag in range(n_ag):
         [
             [np.kron(np.ones((1, n_ag)) + choose_i_vec(ag, n_ag), base_jacy(x))],
             [np.zeros((3 * tsteps, n_ag * 4 * tsteps))],
+            # [np.zeros((2 * tsteps, tsteps)), 2 * reg * np.eye(2 * tsteps), np.zeros((2 * tsteps, (4 * (n_ag - 1) + 1) * tsteps))],
+            # [np.zeros((tsteps, n_ag * 4 * tsteps))]
         ]
     )
     pjacob2.append(jacy)
@@ -503,7 +506,7 @@ genhg.hypergrad.x = x0_worst.copy()
 
 genhg.hypergrad.x_log[:, 0] = genhg.hypergrad.x.copy()
 # %% Run Distributed Solver
-genhg.run_fixed(inner_iters=1, n_iters=2000, log_data=False)
+# genhg.run_fixed(inner_iters=1, n_iters=2000, log_data=False)
 # %% Run General Setup Iteration
 genhg.run_general(n_iters=500, timing=False, log_data=False)
 # %% Plot Results
@@ -514,7 +517,7 @@ plt.figure()
 genhg.plot_perturbed_sensitivity_error()
 plt.show()
 # %% Plot "Relative Suboptimality"
-every = 5
+every = 1
 inner = 10
 objs = genhg.compute_objective(every=every, inner=inner)
 best_obj = np.min(objs)
@@ -907,7 +910,7 @@ for ag in tqdm(range(n_ag)):
         dual_pg_eq.append(dual_pg_eq_tmp)
 
         # Dual coupling inequality part computation
-        dual_pg_coup_tmp = []
+        dual_pg_coup_tmp = 0
         for jj in range(n_ineq_coup):
             dual_pg_coup_tmp += A_ineq_coup.transpose()[idx, jj] * lambda_coup[jj]
         dual_pg_coup.append(dual_pg_coup_tmp)
